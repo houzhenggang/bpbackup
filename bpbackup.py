@@ -4,6 +4,7 @@
 import functools
 import sys
 import pyinotify
+import ConfigParser
 
 class Counter(object):
     """
@@ -28,21 +29,24 @@ def on_loop(notifier, counter):
         sys.stdout.write("Loop %d\n" % counter.count)
         counter.plusone()
 
-wm = pyinotify.WatchManager()
-notifier = pyinotify.Notifier(wm)
-wm.add_watch('/tmp', pyinotify.ALL_EVENTS)
-on_loop_func = functools.partial(on_loop, counter=Counter())
+if __name__ == "__main__":
 
-# Notifier instance spawns a new process when daemonize is set to True. This
-# child process' PID is written to /tmp/pyinotify.pid (it also automatically
-# deletes it when it exits normally). If no custom pid_file is provided it
-# would write it more traditionally under /var/run/. Note that in both cases
-# the caller must ensure the pid file doesn't exist when this method is called
-# othewise it will raise an exception. /tmp/stdout.txt is used as stdout 
-# stream thus traces of events will be written in it. callback is the above 
-# function and will be called after each event loop.
-try:
-    notifier.loop(daemonize=True, callback=on_loop_func,
-                  pid_file='/tmp/pyinotify.pid', stdout='/tmp/stdout.txt')
-except pyinotify.NotifierError, err:
-    print >> sys.stderr, err
+# Reading configration
+    config = ConfigParser.ConfigParser()
+    config.read('config.cfg')
+    pid_file = config.get('Runtime', 'pid_file')
+    sync_log = config.get('Runtime', 'sync_log')
+    error_log = config.get('Runtime', 'error_log')
+
+    wm = pyinotify.WatchManager()
+    notifier = pyinotify.Notifier(wm)
+    wm.add_watch('/tmp', pyinotify.ALL_EVENTS)
+    on_loop_func = functools.partial(on_loop, counter=Counter())
+
+    try:
+        notifier.loop(daemonize=True,
+                    callback=on_loop_func,
+                    stdout=sync_log,
+                    pid_file=pid_file)
+    except pyinotify.NotifierError, err:
+        print >> sys.stderr, err

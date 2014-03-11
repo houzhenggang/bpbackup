@@ -6,6 +6,7 @@ import sys
 import pyinotify
 import ConfigParser
 import logging
+import pybcs
 
 class Counter(object):
     """

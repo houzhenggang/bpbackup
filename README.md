@@ -7,7 +7,7 @@ System Requirements
 -------------------
 
 * pyinotify
-    - *Ubuntu has already installed this package*
+    - https://github.com/seb-m/pyinotify
     - sudo pip install pyinotify
 * ConfigParser
     - Version 3.2 or newer

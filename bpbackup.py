@@ -8,24 +8,11 @@ import ConfigParser
 import logging
 import pybcs
 
-class Counter(object):
-    """
-    Simple counter.
-    """
-    def __init__(self):
-        self.count = 0
-    def plusone(self):
-        self.count += 1
-
-def on_sync(notifier, counter):
-    if counter.count > 4:
-        # Loops 5 times then exits.
-        logging.info("Exit")
-        notifier.stop()
-        sys.exit(0)
-    else:
-        logging.info("Loop %d" % (counter.count))
-        counter.plusone()
+class EventHandler(pyinotify.ProcessEvent):
+    def process_IN_CREATE(self, event):
+        logging.debug(event.pathname)
+    def process_IN_DELETE(self, event):
+        logging.debug(event.pathname)
 
 def main(argv):
 
@@ -53,12 +40,12 @@ def main(argv):
         wm.add_watch(d, pyinotify.ALL_EVENTS)
         logging.info("Adding %s" % (d))
 
-    notifier = pyinotify.Notifier(wm)
-    sync_func = functools.partial(on_sync, counter=Counter())
+    handler = EventHandler()
+    notifier = pyinotify.Notifier(wm, handler)
+    #sync_func = functools.partial(on_sync, counter=Counter())
 
     try:
         notifier.loop(daemonize=True,
-                    callback=sync_func,
                     pid_file=pid_file)
     except pyinotify.NotifierError, err:
         logging.error(err)
